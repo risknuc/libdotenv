@@ -1,0 +1,23 @@
+Library for reading environment variable files
+
+IMPORTANT! I'm too lazy to write how to install the library :) 
+so you'll figure it out yourself, you're not dumb, right?
+
+There's only one function you can use ->
+
+    int loadenv(const char* dotenv_file_path, int overwrite_if_exists)
+
+Also, keep in mind that everything is written in a very compact way, 
+and there are bugs, which I'll probably fix someday if I'm not too lazy. 
+Maybe. But anyway, it works with pointers, there are no memory leaks, 
+everything seems fine and somewhat optimized. For testing, you can run 
+the following command if you're using Linux ->
+
+    source libdotenv_build.sh -c
+
+This will run the check and build the example located in the `example/` 
+folder. The argument can be either `-c` or `--check`, but you'll figure 
+it out.
+
+In general, the project is extremely small. I just put it together in an 
+evening when I was bored. So, that's how it turned out.
