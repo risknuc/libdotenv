@@ -9,7 +9,7 @@
 #   define r_exists(dotenv_file_path) (GetFileAttributesA((dotenv_file_path)) != INVALID_FILE_ATTRIBUTES ? 0 : -1)
 #else
 #   include <unistd.h>
-#   define r_exists(dotenv_file_path) access((dotenv_file_path), F_OK) == 0 ? 0 : -1
+#   define r_exists(dotenv_file_path) (access((dotenv_file_path), F_OK) == 0 ? 0 : -1)
 #endif
 
 #define r_continue_pointer(pointer) ((*(pointer))++)
@@ -52,7 +52,11 @@ static int f_process_dotenv_inloop(char** dotenv_content, int overwrite_if_exist
     char* value_processed = f_process_until_eof_char(dotenv_content, '\n');
     if (value_processed == NULL) { r_free_memory(key_processed); return -1; }
 
-    if (setenv(key_processed, value_processed, overwrite_if_exists) != 0) {
+    #ifdef _WIN32
+        if (_putenv_s(key_processed, value_processed) != 0) {
+    #else
+        if (setenv(key_processed, value_processed, overwrite_if_exists) != 0) {
+    #endif
         r_free_memory(key_processed); r_free_memory(value_processed); return -1;
     }
 
@@ -60,7 +64,7 @@ static int f_process_dotenv_inloop(char** dotenv_content, int overwrite_if_exist
 }
 
 static int f_process_dotenv_content(char** dotenv_content, int overwrite_if_exists) {
-    while (r_request_pointer(dotenv_content) != r_eof || r_request_pointer(dotenv_content) != r_eof) {
+    while (r_request_pointer(dotenv_content) != r_eof && r_request_pointer(dotenv_content) != r_eof) {
         if (r_request_pointer(dotenv_content) == '#' || r_request_pointer(dotenv_content) == ';') return 0;
         int inloop_line_status = f_process_dotenv_inloop(dotenv_content, overwrite_if_exists);
         if (inloop_line_status == -1) return -1;
