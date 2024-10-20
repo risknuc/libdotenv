@@ -1,6 +1,7 @@
 #ifndef libdotenv_dotenv_h
 #define libdotenv_dotenv_h
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #ifdef _WIN32
@@ -16,7 +17,9 @@
 
 #define r_free_memory(pointer) free((pointer))
 
+#define d_dotenv_line_buffer 256
 #define d_default_string_buffer 16
+
 #define r_eof '\0'
 
 static char* f_process_until_eof_char(char** dotenv_content, char r_eof_char) {
@@ -57,7 +60,8 @@ static int f_process_dotenv_inloop(char** dotenv_content, int overwrite_if_exist
 }
 
 static int f_process_dotenv_content(char** dotenv_content, int overwrite_if_exists) {
-    while (r_request_pointer(dotenv_content) != r_eof) {
+    while (r_request_pointer(dotenv_content) != r_eof || r_request_pointer(dotenv_content) != r_eof) {
+        if (r_request_pointer(dotenv_content) == '#' || r_request_pointer(dotenv_content) == ';') return 0;
         int inloop_line_status = f_process_dotenv_inloop(dotenv_content, overwrite_if_exists);
         if (inloop_line_status == -1) return -1;
     }
@@ -66,10 +70,19 @@ static int f_process_dotenv_content(char** dotenv_content, int overwrite_if_exis
 }
 
 int loadenv(const char* dotenv_file_path, int overwrite_if_exists) {
-    char* dotenv_content = "TEST=VALUE\nTEST_SEC=ITS STRING\n\0";
+    if (r_exists(dotenv_file_path) != 0) return -1;
 
-    int process_status = f_process_dotenv_content(&dotenv_content, overwrite_if_exists);
-    return process_status;
+    FILE* file_stream = fopen(dotenv_file_path, "r");
+    if (file_stream == NULL) return -1;
+
+    char dotenv_line_buffer[d_dotenv_line_buffer] = {0};
+    while (fgets(dotenv_line_buffer, sizeof(dotenv_line_buffer), file_stream)) {
+        char* dotenv_pointer = dotenv_line_buffer;
+        int process_status = f_process_dotenv_content(&dotenv_pointer, overwrite_if_exists);
+        if (process_status != 0) return -1;
+    } fclose(file_stream);
+
+    return 0;
 }
 
 #endif // libdotenv_dotenv_h
